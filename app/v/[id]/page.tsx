@@ -58,25 +58,25 @@ export async function generateMetadata({
     };
     const twitter: Metadata["twitter"] = dims
       ? {
-          card: "player",
-          title: media.title,
-          description: media.description,
-          images: [media.fileUrl],
-          players: [
-            {
-              playerUrl: url,
-              streamUrl: media.fileUrl,
-              width: dims.width,
-              height: dims.height,
-            },
-          ],
-        }
+        card: "player",
+        title: media.title,
+        description: media.description,
+        images: [media.fileUrl],
+        players: [
+          {
+            playerUrl: url,
+            streamUrl: media.fileUrl,
+            width: dims.width,
+            height: dims.height,
+          },
+        ],
+      }
       : {
-          card: "summary_large_image",
-          title: media.title,
-          description: media.description,
-          images: [media.fileUrl],
-        };
+        card: "summary_large_image",
+        title: media.title,
+        description: media.description,
+        images: [media.fileUrl],
+      };
     return {
       title: media.title,
       description: media.description,
@@ -86,7 +86,7 @@ export async function generateMetadata({
         title: media.title,
         description: media.description,
         url,
-        siteName: "DiscEmbed",
+        siteName: "NCZ host",
         images: [{ url: media.fileUrl, alt: media.title }],
         videos: [video],
       },
@@ -109,7 +109,7 @@ export async function generateMetadata({
       title: media.title,
       description: media.description,
       url,
-      siteName: "DiscEmbed",
+      siteName: "NCZ host",
       images: [image],
     },
     twitter: {

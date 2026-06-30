@@ -21,7 +21,7 @@ export function SiteHeader() {
           <span className="grid h-7 w-7 place-items-center rounded-md bg-indigo-600 text-sm text-white">
             D
           </span>
-          DiscEmbed
+          NCZ host
         </Link>
 
         <nav className="flex items-center gap-1 text-sm">

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DiscEmbed — share media as Discord embeds",
+  title: "NCZ host — share media as Discord embeds",
   description:
     "Upload an image, GIF, or video and get a link that embeds in Discord with an editable title and description.",
 };
