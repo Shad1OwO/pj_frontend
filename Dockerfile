@@ -33,14 +33,19 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Copy necessary files from build stage
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copy all source and config files needed for runtime build
 COPY --from=build /app/package.json ./
 COPY --from=build /app/bun.lock ./
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/next.config.ts ./
 COPY --from=build /app/postcss.config.mjs ./
+COPY --from=build /app/tsconfig.json ./
+COPY --from=build /app/app ./app
+COPY --from=build /app/components ./components
+COPY --from=build /app/lib ./lib
 
 EXPOSE 3000
 
