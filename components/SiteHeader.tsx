@@ -7,6 +7,7 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { LogOut } from "lucide-react";
+import Image from "next/image";
 
 export function SiteHeader() {
   const { user, loading, logout } = useAuth();
@@ -18,8 +19,8 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 font-bold text-zinc-900 dark:text-zinc-100"
         >
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-indigo-600 text-sm text-white">
-            D
+          <span className="grid h-20 w-20 place-items-center">
+            <Image src="/icon.ico" alt="" width={128} height={128}/>
           </span>
           NCZ host
         </Link>
