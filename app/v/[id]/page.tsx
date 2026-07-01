@@ -6,15 +6,15 @@
  * + Twitter tags, so Discord renders a rich embed with the editable
  * title/description and the media inline.
  *
- * The page body is a Server Component that renders the media and a copy-link
- * button (the button is a small client island).
+ * The visible page body is intentionally MINIMAL: pure black background showing
+ * ONLY the media. If the uploader opted into it, a subtle single grey line of
+ * info (size / upload time / uploader) appears beneath the media. The title and
+ * description are NOT shown on the page — they live only in the OG meta tags.
  */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchPublicMedia } from "@/lib/api";
-import { shareUrl } from "@/lib/share";
 import { PUBLIC_SITE_URL } from "@/lib/env";
-import { ViewShareButton } from "./view-share-button";
 
 // Always render fresh: edits must reflect immediately (Next 16 fetch is
 // no-store by default, but we set this explicitly for clarity).
@@ -23,6 +23,37 @@ export const dynamic = "force-dynamic";
 interface PageProps {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+/** Format a byte count as a compact human string (KB/MB). */
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Format a timestamp as a relative "x ago" string. */
+function timeAgo(ts: number): string {
+  const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
+/** Build the subtle info line from whichever toggles the uploader enabled. */
+function infoLine(
+  m: NonNullable<Awaited<ReturnType<typeof fetchPublicMedia>>>,
+): string | null {
+  const parts: string[] = [];
+  if (m.showSize) parts.push(formatSize(m.size));
+  if (m.showTimestamp) parts.push(timeAgo(m.createdAt));
+  if (m.showUploader && m.uploaderName) parts.push(`by ${m.uploaderName}`);
+  return parts.length ? parts.join(" · ") : null;
 }
 
 // --- generateMetadata: the part Discord actually reads ---------------------
@@ -121,7 +152,7 @@ export async function generateMetadata({
   };
 }
 
-// --- Page body -------------------------------------------------------------
+// --- Page body: pure black, media only -------------------------------------
 
 export default async function ViewPage({ params }: PageProps) {
   const { id } = await params;
@@ -130,49 +161,33 @@ export default async function ViewPage({ params }: PageProps) {
     notFound();
   }
 
-  const link = shareUrl(media.id, media.scrapeVersion, true);
+  const info = infoLine(media);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10">
-      <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="bg-black/95 flex items-center justify-center">
-          {media.isVideo ? (
-            <video
-              controls
-              autoPlay
-              loop
-              className="max-h-[70vh] w-full"
-              src={media.fileUrl}
-              title={media.title}
-            />
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              className="max-h-[70vh] w-full object-contain"
-              src={media.fileUrl}
-              alt={media.title}
-            />
-          )}
-        </div>
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-black px-4 py-8">
+      {media.isVideo ? (
+        <video
+          controls
+          autoPlay
+          loop
+          className="max-h-[85vh] w-auto max-w-full object-contain"
+          src={media.fileUrl}
+          title={media.title}
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className="max-h-[85vh] w-auto max-w-full object-contain"
+          src={media.fileUrl}
+          alt={media.title}
+        />
+      )}
 
-        <div className="flex flex-col gap-3 p-5">
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-            {media.title}
-          </h1>
-          {media.description && (
-            <p className="whitespace-pre-wrap text-sm text-zinc-600 dark:text-zinc-400">
-              {media.description}
-            </p>
-          )}
-
-          <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-900">
-            <ViewShareButton value={link} />
-            <span className="font-mono text-xs text-zinc-400">
-              {media.originalFilename}
-            </span>
-          </div>
-        </div>
-      </article>
+      {info && (
+        <p className="mt-4 select-text text-center text-xs text-zinc-500">
+          {info}
+        </p>
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import type {
   AuthUser,
   MediaOwner,
   MediaPublic,
+  MediaToggles,
 } from "./types";
 
 export class ApiClientError extends Error {
@@ -50,11 +51,15 @@ async function request<T>(
 // --- Auth ------------------------------------------------------------------
 
 export const api = {
-  register: (email: string, password: string) =>
+  register: (
+    email: string,
+    password: string,
+    displayName?: string,
+  ) =>
     request<AuthResponse>("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, displayName }),
     }),
 
   login: (email: string, password: string) =>
@@ -69,14 +74,30 @@ export const api = {
 
   me: () => request<{ user: AuthUser | null }>("/api/auth/me"),
 
+  /** Update the current user's display name. */
+  updateProfile: (displayName: string) =>
+    request<AuthResponse>("/api/auth/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ displayName }),
+    }),
+
   // --- Media -------------------------------------------------------------
 
-  /** Upload a media file with optional title/description (multipart). */
-  upload: (file: File, title: string, description: string) => {
+  /** Upload a media file with optional title/description/toggles (multipart). */
+  upload: (
+    file: File,
+    title: string,
+    description: string,
+    toggles: MediaToggles,
+  ) => {
     const form = new FormData();
     form.append("file", file);
     form.append("title", title);
     form.append("description", description);
+    form.append("showSize", String(toggles.showSize));
+    form.append("showTimestamp", String(toggles.showTimestamp));
+    form.append("showUploader", String(toggles.showUploader));
     return request<{ media: MediaOwner }>("/api/media/", {
       method: "POST",
       body: form,
@@ -86,11 +107,16 @@ export const api = {
 
   listMedia: () => request<{ media: MediaOwner[] }>("/api/media/"),
 
-  updateMedia: (id: string, title: string, description: string) =>
+  updateMedia: (
+    id: string,
+    title: string,
+    description: string,
+    toggles: MediaToggles,
+  ) =>
     request<{ media: MediaOwner }>(`/api/media/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description }),
+      body: JSON.stringify({ title, description, ...toggles }),
     }),
 
   deleteMedia: (id: string) =>

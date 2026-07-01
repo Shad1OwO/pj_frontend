@@ -9,7 +9,7 @@
  * so if the user navigates here for a media they don't own, the API call fails
  * and we surface an error.
  */
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Loader2, Save } from "lucide-react";
@@ -27,10 +27,15 @@ export default function EditPage() {
   const [media, setMedia] = useState<MediaOwner | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [showSize, setShowSize] = useState(false);
+  const [showTimestamp, setShowTimestamp] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const [savedVersion, setSavedVersion] = useState<number | null>(null);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,6 +53,9 @@ export default function EditPage() {
         setMedia(found);
         setTitle(found.title);
         setDescription(found.description);
+        setShowSize(found.showSize);
+        setShowTimestamp(found.showTimestamp);
+        setShowUploader(found.showUploader);
         setSavedVersion(found.scrapeVersion);
       } catch {
         if (!cancelled) setError("Couldn't load this media.");
@@ -60,16 +68,35 @@ export default function EditPage() {
     };
   }, [id]);
 
+  // Clear the auto-dismiss timer if the component unmounts mid-countdown.
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+    };
+  }, []);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setSaved(false);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
     setSaving(true);
     try {
-      const { media: updated } = await api.updateMedia(id, title, description);
+      const { media: updated } = await api.updateMedia(id, title, description, {
+        showSize,
+        showTimestamp,
+        showUploader,
+      });
       setMedia(updated);
       setTitle(updated.title);
       setDescription(updated.description);
+      setShowSize(updated.showSize);
+      setShowTimestamp(updated.showTimestamp);
+      setShowUploader(updated.showUploader);
       setSavedVersion(updated.scrapeVersion);
+      // Show a confirmation that toggles + title/description were saved.
+      setSaved(true);
+      savedTimer.current = setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       setError(
         err instanceof ApiClientError
@@ -142,9 +169,47 @@ export default function EditPage() {
                 />
               </label>
 
+              <fieldset className="flex flex-col gap-2 rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+                <legend className="px-1 text-xs font-medium text-zinc-500">
+                  Show on view page
+                </legend>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={showSize}
+                    onChange={(e) => setShowSize(e.target.checked)}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  File size
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={showTimestamp}
+                    onChange={(e) => setShowTimestamp(e.target.checked)}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Upload timestamp
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={showUploader}
+                    onChange={(e) => setShowUploader(e.target.checked)}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Who uploaded it (your display name)
+                </label>
+              </fieldset>
+
               {error && (
                 <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
                   {error}
+                </p>
+              )}
+              {saved && !error && (
+                <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  ✓ Saved! Title, description, and visibility settings updated.
                 </p>
               )}
 

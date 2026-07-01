@@ -24,6 +24,9 @@ export function UploadForm({
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [showSize, setShowSize] = useState(false);
+  const [showTimestamp, setShowTimestamp] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +50,11 @@ export function UploadForm({
     }
     setBusy(true);
     try {
-      const { media } = await api.upload(file, title, description);
+      const { media } = await api.upload(file, title, description, {
+        showSize,
+        showTimestamp,
+        showUploader,
+      });
       onUploaded(media);
     } catch (err) {
       setError(
@@ -107,6 +114,39 @@ export function UploadForm({
           className="resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
         />
       </label>
+
+      <fieldset className="flex flex-col gap-2 rounded-md border border-zinc-300 p-3 dark:border-zinc-700">
+        <legend className="px-1 text-xs font-medium text-zinc-500">
+          Show on view page (optional)
+        </legend>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={showSize}
+            onChange={(e) => setShowSize(e.target.checked)}
+            className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          File size
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={showTimestamp}
+            onChange={(e) => setShowTimestamp(e.target.checked)}
+            className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          Upload timestamp
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={showUploader}
+            onChange={(e) => setShowUploader(e.target.checked)}
+            className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          Who uploaded it (your display name)
+        </label>
+      </fieldset>
 
       {error && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">

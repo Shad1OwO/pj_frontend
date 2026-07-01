@@ -21,6 +21,15 @@ export function MediaCard({
   deletingId: string | null;
 }) {
   const isDeleting = deletingId === media.id;
+
+  // Build the optional metadata line from the toggles the uploader enabled.
+  const metaParts: string[] = [media.originalFilename];
+  if (media.showSize) metaParts.push(`${Math.round(media.size / 1024)} KB`);
+  if (media.showTimestamp)
+    metaParts.push(new Date(media.createdAt).toLocaleString());
+  if (media.showUploader && media.uploaderName)
+    metaParts.push(`by ${media.uploaderName}`);
+
   return (
     <li className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800 sm:flex-row">
       <div className="sm:w-32 sm:shrink-0">
@@ -48,9 +57,7 @@ export function MediaCard({
             <h3 className="truncate font-semibold text-zinc-900 dark:text-zinc-100">
               {media.title}
             </h3>
-            <p className="truncate text-xs text-zinc-500">
-              {media.originalFilename} · {Math.round(media.size / 1024)} KB
-            </p>
+            <p className="truncate text-xs text-zinc-500">{metaParts.join(" · ")}</p>
           </div>
           <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
             {media.isVideo ? "video" : "image"}

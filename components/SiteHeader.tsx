@@ -1,16 +1,19 @@
 "use client";
 
 /**
- * Top navigation bar. Shows the brand, and auth-aware links: dashboard/upload
- * when logged in, login/register otherwise. Reads user state from AuthProvider.
+ * Top navigation bar. Shows the brand, a light/dark theme toggle, and
+ * auth-aware links: dashboard/upload/account when logged in, login/register
+ * otherwise. Reads user state from AuthProvider and theme from ThemeProvider.
  */
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
-import { LogOut } from "lucide-react";
 import Image from "next/image";
+import { LogOut, Moon, Sun, User as UserIcon } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 
 export function SiteHeader() {
   const { user, loading, logout } = useAuth();
+  const { theme, toggle } = useTheme();
 
   return (
     <header className="border-b border-zinc-200 dark:border-zinc-800">
@@ -19,13 +22,28 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 font-bold text-zinc-900 dark:text-zinc-100"
         >
-          <span className="grid h-20 w-20 place-items-center">
-            <Image src="/icon.ico" alt="" width={128} height={128}/>
+          <span className="grid h-8 w-8 place-items-center">
+            <Image src="/icon.ico" alt="" width={32} height={32} priority />
           </span>
           NCZ host
         </Link>
 
         <nav className="flex items-center gap-1 text-sm">
+          {/* Theme toggle — always visible */}
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label="Toggle dark mode"
+            title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+            className="inline-flex items-center justify-center rounded-md p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </button>
+
           {loading ? null : user ? (
             <>
               <Link
@@ -40,15 +58,23 @@ export function SiteHeader() {
               >
                 Upload
               </Link>
-              <span className="hidden px-2 text-zinc-400 sm:inline">
-                {user.email}
-              </span>
+              <Link
+                href="/account"
+                title="Account settings"
+                className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                <UserIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {user.displayName || "Account"}
+                </span>
+              </Link>
               <button
                 type="button"
                 onClick={() => logout()}
                 className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
-                <LogOut className="h-4 w-4" /> Logout
+                <LogOut className="h-4 w-4" />{" "}
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </>
           ) : (

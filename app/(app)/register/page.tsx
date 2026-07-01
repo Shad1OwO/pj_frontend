@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,7 +31,7 @@ export default function RegisterPage() {
     }
     setBusy(true);
     try {
-      await register(email, password);
+      await register(email, password, displayName.trim() || undefined);
       router.replace("/dashboard");
     } catch (err) {
       setError(errorMessage(err, "Registration failed."));
@@ -54,6 +55,20 @@ export default function RegisterPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium">
+            Display name{" "}
+            <span className="font-normal text-zinc-400">(optional)</span>
+          </span>
+          <input
+            type="text"
+            maxLength={40}
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Shown publicly when you enable it"
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900"
           />
         </label>

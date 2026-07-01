@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
-import { SiteHeader } from "@/components/SiteHeader";
+import { ThemeProvider } from "@/lib/theme-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,10 +15,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NCZ host — share media as Discord embeds",
+  title: "DiscEmbed — share media as Discord embeds",
   description:
     "Upload an image, GIF, or video and get a link that embeds in Discord with an editable title and description.",
 };
+
+/**
+ * Blocking inline script (runs before paint) that sets the initial theme class
+ * from localStorage, defaulting to dark. Prevents a flash of the wrong theme.
+ * Kept inline + untyped so it executes synchronously in <head>.
+ */
+const noFlashScript = `(function(){try{var t=localStorage.getItem('discembed-theme');if(t!=='light'){document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();`;
 
 export default function RootLayout({
   children,
@@ -29,14 +36,15 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: noFlashScript }} />
+      </head>
       <body className="min-h-full bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-100">
-        <AuthProvider>
-          <div className="flex min-h-full flex-col">
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-          </div>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
